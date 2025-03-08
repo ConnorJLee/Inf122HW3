@@ -3,7 +3,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Event implements Comparable<Event> {
-	public int eventId;
+	public Integer eventId;
 	public String name;
 	public LocalDateTime dateCreated;
 	public LocalDateTime dateDeleted;
@@ -11,7 +11,7 @@ public class Event implements Comparable<Event> {
 	public LocalDateTime endDate;
 	public List<User> usersSharedTo;
 	
-	public Event(int id, String name, LocalDateTime start, LocalDateTime end) {
+	public Event(Integer id, String name, LocalDateTime start, LocalDateTime end) {
 		this.eventId = id;
 		this.name = name;
 		this.startDate = start;

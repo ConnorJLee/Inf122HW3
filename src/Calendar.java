@@ -4,19 +4,20 @@ import java.time.LocalDateTime;
 import java.util.TimeZone;
 
 public class Calendar implements ICalendar{
-	public int calendarId;
+	public Integer calendarId;
 	public String name;
 	public LocalDateTime dateCreated;
 	public LocalDateTime dateDeleted;
 	public User owner;
-	public boolean isPublic;
+	public Boolean isPublic;
 	public String calendarView;
 	public TimeZone timeZone;
 	public List<Event> events;
 	public List<Event> deletedEvents;
 	public List<User> usersSharedTo;
+	public static Calendar InvalidCalendar = new Calendar(-2, "Invalid\n\n", null, false, TimeZone.getDefault());
 	
-	public Calendar(int id, String name, User owner, boolean publicVisibility, TimeZone timeZone) {
+	public Calendar(Integer id, String name, User owner, Boolean publicVisibility, TimeZone timeZone) {
 		this.calendarId = id;
 		this.name = name;
 		this.owner = owner;
@@ -40,7 +41,7 @@ public class Calendar implements ICalendar{
 	}
 
 	public void updateEvent(Event event) {
-		for (int i = 0; i < this.events.size(); i++) {
+		for (Integer i = 0; i < this.events.size(); i++) {
 			Event curEvent = this.events.get(i);
 			if (curEvent.eventId == event.eventId) {
 				curEvent.name = event.name;
@@ -51,7 +52,7 @@ public class Calendar implements ICalendar{
 	}
 
 	public void updateAllEventTimezones() {
-		for (int i = 0; i < this.events.size(); i++) {
+		for (Integer i = 0; i < this.events.size(); i++) {
 			this.events.get(i).startDate.atZone(this.timeZone.toZoneId());
 			this.events.get(i).endDate.atZone(this.timeZone.toZoneId());
 		}
@@ -65,11 +66,15 @@ public class Calendar implements ICalendar{
 	public List<Event> viewCalendarEvents() {
 		return this.events;
 	}
+	
+	public Event GetEvent(Integer eventIndex) {
+		return this.events.get(eventIndex);
+	}
 
 	
 	public String toString() {
 		StringBuilder eventStringBuilder = new StringBuilder();
-		int curEventIndex = 0;
+		Integer curEventIndex = 0;
 		for (Event event : this.events) {
 			eventStringBuilder.append(curEventIndex + ": " + event.name + "\n");
 			curEventIndex ++;

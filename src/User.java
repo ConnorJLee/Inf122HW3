@@ -2,14 +2,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class User {
-	private int userId;
+	private Integer userId;
 	public Settings settings;
 	public String username;
 	public List<Calendar> calendars;
 	public List<Calendar> sharedCalendars;
 	public List<Calendar> deletedCalendars;
+	public static User InvalidUser = new User(-2, "Invalid\n\n");
 	
-	public User(int id, String name) {
+	public User(Integer id, String name) {
 		this.userId = id;
 		this.username = name;
 		
@@ -26,7 +27,7 @@ public class User {
 	}
 
 	public void updateCalendar(Calendar calendar) {
-		for (int i = 0; i < this.calendars.size(); i++) {
+		for (Integer i = 0; i < this.calendars.size(); i++) {
 			Calendar curCalendar = this.calendars.get(i);
 			if (curCalendar.calendarId == calendar.calendarId) {
 				curCalendar.name = calendar.name;
@@ -48,13 +49,25 @@ public class User {
 		return "Replace with user info";
 	}
 	
-	public void importUserInfo() {
-		
+	public List<Calendar> GetCalendars(){
+		return this.calendars;
+	}
+	
+	public List<Calendar> GetSharedCalendars(){
+		return this.sharedCalendars;
+	}
+	
+	public Calendar GetCalendar(Integer calendarId){
+		return this.calendars.get(calendarId);
+	}
+	
+	public Calendar GetSharedCalendar(Integer calendarId){
+		return this.sharedCalendars.get(calendarId);
 	}
 	
 	public String toString() {
 		StringBuilder calendarStringBuilder = new StringBuilder();
-		int curCalendarIndex = 0;
+		Integer curCalendarIndex = 0;
 		for (Calendar calendar : this.calendars) {
 			calendarStringBuilder.append(curCalendarIndex + ": " + calendar.name + "\n");
 			curCalendarIndex ++;

@@ -3,21 +3,26 @@ import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 
 public class InputHandler {
-	private static Scanner inputScanner = new Scanner(System.in);
+	private  Scanner inputScanner;
+	private static InputHandler inputHandler;
 	
-	private static String getStringInput() {
+	private InputHandler() {
+		this.inputScanner = new Scanner(System.in);
+	}
+	
+	private String getStringInput() {
 		return inputScanner.nextLine();
 	}
 	
-	private static int getNumInput() {
-		int nextInt = inputScanner.nextInt();
+	private Integer getNumInput() {
+		Integer nextInt = inputScanner.nextInt();
 		if(inputScanner.hasNextLine()) {
 			inputScanner.nextLine();
 		}
 		return nextInt;
 	}
 	
-	private static boolean getVisibilityInput() {
+	private Boolean getVisibilityInput() {
 		String inputStr = "";
 		while (inputStr.isEmpty() || (! inputStr.equals("private") && ! inputStr.equals("public"))) {
 			System.out.println("Is this calendar \"private\" or \"public\"");
@@ -27,11 +32,19 @@ public class InputHandler {
 		return inputStr.equals("public");
 	}
 	
-	public static int GetIndex() {
+	public static InputHandler GetInputHandler() {
+		if (InputHandler.inputHandler == null) {
+			InputHandler.inputHandler = new InputHandler();
+		}
+		
+		return InputHandler.inputHandler;
+	}
+	
+	public  Integer GetIndex() {
 		return getNumInput();
 	}
 	
-	public static String GetName() {
+	public  String GetName() {
 		String inputStr = "";
 		while (inputStr.isEmpty()) {
 			System.out.println("Enter a name:");
@@ -41,20 +54,20 @@ public class InputHandler {
 		return inputStr;
 	}
 	
-	public static Calendar GetNewCalendar(int id, User owner) {
+	public  Calendar GetNewCalendar(Integer id, User owner) {
 		System.out.println("Enter a name for the calendar:");
 		String name = getStringInput();
 		
-		boolean isPublic = getVisibilityInput();
+		Boolean isPublic = getVisibilityInput();
 		
 		return new Calendar(id, name, owner, isPublic, owner.settings.currentTimeZone);
 	}
 
-	public static Calendar GetUpdatedCalendar(int id, User owner) {
+	public  Calendar GetUpdatedCalendar(Integer id, User owner) {
 		System.out.println("Enter a name for the calendar:");
 		String name = getStringInput();
 		
-		boolean isPublic = getVisibilityInput();
+		Boolean isPublic = getVisibilityInput();
 		
 		System.out.println("Enter calendar view (day, week, month, year):");
 		String view = getStringInput();
@@ -64,14 +77,14 @@ public class InputHandler {
 		return newCalendar;
 	}
 	
-	public static User GetNewUser(int id) {
+	public  User GetNewUser(Integer id) {
 		System.out.println("Enter a username:");
 		String name = getStringInput();
 		
 		return new User(id, name);
 	}
 	
-	public static Event GetNewEvent(int id) {
+	public  Event GetNewEvent(Integer id) {
 		System.out.println("Enter a name for the event:");
 		String name = getStringInput();
 		
@@ -88,13 +101,13 @@ public class InputHandler {
 			}	
 		}
 		
-		int startHour = -1;
+		Integer startHour = -1;
 		while (startHour < 0 || startHour > 23) {
 			System.out.println("Enter the starting hour in 24 hour format");
 			startHour = getNumInput();
 		}
 
-		int startMin = -1;
+		Integer startMin = -1;
 		while (startMin < 0 || startMin > 59) {
 			System.out.println("Enter the starting minute (0-59)");
 			startMin = getNumInput();
@@ -113,13 +126,13 @@ public class InputHandler {
 			}
 		}
 		
-		int endHour = -1;
+		Integer endHour = -1;
 		while (endHour < 0 || endHour > 23) {
 			System.out.println("Enter the ending hour in 24 hour format");
 			endHour = getNumInput();
 		}
 
-		int endMin = -1;
+		Integer endMin = -1;
 		while (endMin < 0 || endMin > 59) {
 			System.out.println("Enter the ending minute (0-59)");
 			endMin = getNumInput();
@@ -128,7 +141,7 @@ public class InputHandler {
 		return new Event(id, name, startDate.atTime(startHour, startMin), endDate.atTime(endHour, endMin));
 	}
 	
-	public static String GetSelection() {
+	public  String GetSelection() {
 		return getStringInput();
 	}
 }

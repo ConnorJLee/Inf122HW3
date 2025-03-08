@@ -1,327 +1,271 @@
-import java.util.ArrayList;
-import java.util.List;
-
 public class AppEngine {
-	
-	private List<User> users;
-	private List<Calendar> publicCalendars;
-	private int nextUserId;
-	private int nextCalendarId;
-	private int nextEventId;
+	private Integer nextUserId;
+	private Integer nextCalendarId;
+	private Integer nextEventId;
+	private InputHandler inputHandler;
+	private ConsoleDrawer consoleDrawer;
+	private StorageFacade storage;
 	
 	public AppEngine() {
-		this.users = new ArrayList<User>();
-		this.publicCalendars = new ArrayList<Calendar>();
 		this.nextUserId = 0;
 		this.nextCalendarId = 0;
 		this.nextEventId = 0;
+		this.inputHandler = InputHandler.GetInputHandler();
+		this.consoleDrawer = ConsoleDrawer.GetConsoleDrawer();
+		this.storage = StorageFacade.GetStorageFacade();
 	}
 	
 	private void AddUser() {
-		User newUser = InputHandler.GetNewUser(nextUserId);
+		User newUser = this.inputHandler.GetNewUser(nextUserId);
 		nextUserId++;
 		
-		this.users.add(newUser);
+		this.storage.AddUser(newUser);
+	}
+	
+	private Boolean CheckUsersEmpty() {
+		Boolean isEmpty = this.storage.GetUsers().isEmpty();
+		if (isEmpty) {
+			System.out.println("There are no users, please add a user first");
+		}
+		
+		return isEmpty;
+	}
+	
+	private Boolean Check2PlusUsers() {
+		Boolean greaterThan2 = this.storage.GetUsers().size() > 1;
+		if (!greaterThan2) {
+			System.out.println("There needs to be at least 2 users to share");
+		}
+		
+		return greaterThan2;
+	}
+	
+	private Boolean NoCalendars(User user) {
+		Boolean noCalendars = user.GetCalendars().isEmpty();
+		
+		if (noCalendars) {
+			System.out.println("There are no calendars for this user, please add a calendar first");
+		}
+		
+		return noCalendars;
 	}
 	
 	private void AddCalendar() {
-		if (this.users.isEmpty()) {
+		if (this.storage.GetUsers().isEmpty()) {
 			System.out.println("There are no users, please add a user first");
 			return;
 		}
 		
 		System.out.println("Choose a User");
-		ConsoleDrawer.PrintUsers(this.users);
+		this.consoleDrawer.PrintUsers(this.storage.GetUsers());
 		
-		int userIndex = InputHandler.GetIndex();
+		Integer userIndex = this.inputHandler.GetIndex();
 		
-		User owner = this.users.get(userIndex);
+		User owner = this.storage.GetUser(userIndex);
 		
-		Calendar newCalendar = InputHandler.GetNewCalendar(this.nextCalendarId, owner);
-		owner.addCalendar(newCalendar);
-		if (newCalendar.isPublic) {
-			publicCalendars.add(newCalendar);
-		}
+		Calendar newCalendar = this.inputHandler.GetNewCalendar(this.nextCalendarId, owner);
+		this.storage.AddCalendar(newCalendar, owner);
 		this.nextCalendarId++;
 	}
 	
 	private void AddEvent() {
-		if (this.users.isEmpty()) {
-			System.out.println("There are no users, please add a user first");
+		User owner = this.GetUser();
+		if(owner.username.equals("Invalid\n\n")) {
 			return;
+		}
+		
+		if (NoCalendars(owner)) {
+			return;
+		}
+		
+		this.consoleDrawer.PrintUserInfo(owner);
+		System.out.println("Choose a calendar index");
+		Integer calendarIndex = this.inputHandler.GetIndex();
+		Calendar calendar = owner.calendars.get(calendarIndex);
+		
+		Event newEvent = this.inputHandler.GetNewEvent(this.nextEventId);
+		this.nextEventId++;
+		
+		this.storage.AddEvent(newEvent, calendar);
+	}
+	
+	private User GetUser() {
+		if (CheckUsersEmpty()) {
+			return User.InvalidUser;
 		}
 		
 		System.out.println("Choose a User");
-		ConsoleDrawer.PrintUsers(this.users);
-		int userIndex = InputHandler.GetIndex();
+		this.consoleDrawer.PrintUsers(this.storage.GetUsers());
+		Integer userIndex = this.inputHandler.GetIndex();
 		
-		User owner = this.users.get(userIndex);
-		if (owner.calendars.isEmpty()) {
-			System.out.println("There are no calendars for this user, please add a calendar first");
-			return;
-		}
-		
-		ConsoleDrawer.PrintUserInfo(owner);
-		System.out.println("Choose a calendar index");
-		int calendarIndex = InputHandler.GetIndex();
-		Calendar calendar = owner.calendars.get(calendarIndex);
-		
-		Event newEvent = InputHandler.GetNewEvent(this.nextEventId);
-		this.nextEventId++;
-		
-		calendar.addEvent(newEvent);
+		return this.storage.GetUser(userIndex);
 	}
 	
 	private void ViewUser() {
-		if (this.users.isEmpty()) {
-			System.out.println("There are no users, please add a user to view users");
+		User user = this.GetUser();
+		if(user.username.equals("Invalid\n\n")) {
 			return;
 		}
+		this.consoleDrawer.PrintUserInfo(user);
+	}
+	
+	private Calendar GetCalendar() {
+		User owner = this.GetUser();
+		if(owner.username.equals("Invalid\n\n")) {
+			return Calendar.InvalidCalendar;
+		}
 		
-		System.out.println("What user would you like to view?");
-		ConsoleDrawer.PrintUsers(this.users);
-		int userIndex = InputHandler.GetIndex();
-
-		ConsoleDrawer.PrintUserInfo(this.users.get(userIndex));
+		if (NoCalendars(owner)) {
+			return Calendar.InvalidCalendar;
+		}
+		
+		this.consoleDrawer.PrintUserInfo(owner);
+		System.out.println("Choose a calendar index");
+		Integer calendarIndex = this.inputHandler.GetIndex();
+		return this.storage.GetCalendar(owner, calendarIndex);
 	}
 	
 	private void ViewCalendar() {
-		if (this.users.isEmpty()) {
-			System.out.println("There are no users, please add a user first");
+		Calendar calendar = this.GetCalendar();
+		if (calendar.name.equals("Invalid\n\n")) {
 			return;
 		}
-		
-		System.out.println("Choose a User");
-		ConsoleDrawer.PrintUsers(this.users);
-		int userIndex = InputHandler.GetIndex();
-		
-		User owner = this.users.get(userIndex);
-		
-		if (owner.calendars.isEmpty()) {
-			System.out.println("There are no calendars for this user, please add a calendar first");
-			return;
-		}
-		
-		ConsoleDrawer.PrintUserInfo(owner);
-		System.out.println("Choose a calendar index");
-		int calendarIndex = InputHandler.GetIndex();
-		Calendar calendar = owner.calendars.get(calendarIndex);
-		ConsoleDrawer.PrintCalendar(calendar);
+		this.consoleDrawer.PrintCalendar(calendar);
 	}
 	
 	private void ViewEvent() {
-		if (this.users.isEmpty()) {
-			System.out.println("There are no users, please add a user first");
+		Calendar calendar = this.GetCalendar();
+		if (calendar.name.equals("Invalid\n\n")) {
 			return;
 		}
-		
-		System.out.println("Choose a User");
-		ConsoleDrawer.PrintUsers(this.users);
-		int userIndex = InputHandler.GetIndex();
-		
-		User owner = this.users.get(userIndex);
-		
-		ConsoleDrawer.PrintUserInfo(owner);
-		if (owner.calendars.isEmpty()) {
-			System.out.println("There are no calendars for this user, please add a calendar first");
-			return;
-		}
-		
-		System.out.println("Choose a calendar index");
-		int calendarIndex = InputHandler.GetIndex();
-		Calendar calendar = owner.calendars.get(calendarIndex);
 		
 		System.out.println("Choose an event");
-		ConsoleDrawer.PrintEvents(calendar.events);
-		int eventIndex = InputHandler.GetIndex();
+		this.consoleDrawer.PrintEvents(calendar.viewCalendarEvents());
+		Integer eventIndex = this.inputHandler.GetIndex();
 		
-		ConsoleDrawer.PrintEvent(calendar.events.get(eventIndex));
+		this.consoleDrawer.PrintEvent(this.storage.GetEvent(calendar, eventIndex));
 	}
 	
 	private void ViewSharedCalendar() {
-		if (this.users.isEmpty()) {
-			System.out.println("There are no users, please add a user first");
+		User owner = this.GetUser();
+		if(owner.username.equals("Invalid\n\n")) {
 			return;
 		}
 		
-		System.out.println("Choose a User");
-		ConsoleDrawer.PrintUsers(this.users);
-		int userIndex = InputHandler.GetIndex();
-		
-		User owner = this.users.get(userIndex);
-		
-		if (owner.calendars.isEmpty()) {
-			System.out.println("There are no calendars for this user, please add a calendar first");
-			return;
-		}
-		
-		ConsoleDrawer.PrintUserSharedCalendars(owner);
+		this.consoleDrawer.PrintUserSharedCalendars(owner);
 		System.out.println("Choose a calendar index");
-		int calendarIndex = InputHandler.GetIndex();
-		Calendar calendar = owner.sharedCalendars.get(calendarIndex);
-		ConsoleDrawer.PrintCalendar(calendar);
+		Integer calendarIndex = this.inputHandler.GetIndex();
+		Calendar calendar = this.storage.GetSharedCalendar(owner, calendarIndex);
+		this.consoleDrawer.PrintCalendar(calendar);
 	}
 	
 	private void ViewSharedEvent() {
-		if (this.users.isEmpty()) {
-			System.out.println("There are no users, please add a user first");
+		User owner = this.GetUser();
+		if(owner.username.equals("Invalid\n\n")) {
 			return;
 		}
 		
-		System.out.println("Choose a User");
-		ConsoleDrawer.PrintUsers(this.users);
-		int userIndex = InputHandler.GetIndex();
-		
-		User owner = this.users.get(userIndex);
-		
-		ConsoleDrawer.PrintUserSharedCalendars(owner);
-		if (owner.calendars.isEmpty()) {
-			System.out.println("There are no calendars for this user, please add a calendar first");
-			return;
-		}
+		this.consoleDrawer.PrintUserSharedCalendars(owner);
 		
 		System.out.println("Choose a calendar index");
-		int calendarIndex = InputHandler.GetIndex();
-		Calendar calendar = owner.sharedCalendars.get(calendarIndex);
+		Integer calendarIndex = this.inputHandler.GetIndex();
+		Calendar calendar = this.storage.GetSharedCalendar(owner, calendarIndex);
 		
 		System.out.println("Choose an event");
-		ConsoleDrawer.PrintEvents(calendar.events);
-		int eventIndex = InputHandler.GetIndex();
+		this.consoleDrawer.PrintEvents(calendar.viewCalendarEvents());
+		Integer eventIndex = this.inputHandler.GetIndex();
 		
-		ConsoleDrawer.PrintEvent(calendar.events.get(eventIndex));
+		this.consoleDrawer.PrintEvent(this.storage.GetSharedEvent(calendar, eventIndex));
 	}
 
 	private void UpdateCalendar() {
-		if (this.users.isEmpty()) {
-			System.out.println("There are no users, please add a user first");
+		User owner = this.GetUser();
+		if(owner.username.equals("Invalid\n\n")) {
 			return;
 		}
 		
-		System.out.println("Choose a User");
-		ConsoleDrawer.PrintUsers(this.users);
-		
-		int userIndex = InputHandler.GetIndex();
-		
-		User owner = this.users.get(userIndex);
-		
-		if (owner.calendars.isEmpty()) {
-			System.out.println("There are no calendars for this user, please add a calendar first");
+		if (NoCalendars(owner)) {
 			return;
 		}
 		
-		ConsoleDrawer.PrintUserInfo(owner);
+		this.consoleDrawer.PrintUserInfo(owner);
 		System.out.println("Choose a calendar index");
-		int calendarIndex = InputHandler.GetIndex();
-		Calendar calendar = owner.calendars.get(calendarIndex);
+		Integer calendarIndex = this.inputHandler.GetIndex();
+		Calendar calendar = this.storage.GetCalendar(owner, calendarIndex);
 		
 		System.out.println("Enter in new information: ");
 		
-		Calendar newCalendar = InputHandler.GetUpdatedCalendar(calendar.calendarId, owner);
+		Calendar newCalendar = this.inputHandler.GetUpdatedCalendar(calendar.calendarId, owner);
 		
-		owner.updateCalendar(newCalendar);
+		this.storage.UpdateCalendar(owner, newCalendar);
 	}
 
 	
 	private void UpdateEvent() {
-		if (this.users.isEmpty()) {
-			System.out.println("There are no users, please add a user first");
+		Calendar calendar = this.GetCalendar();
+		if (calendar.name.equals("Invalid\n\n")) {
 			return;
 		}
-		
-		System.out.println("Choose a User");
-		ConsoleDrawer.PrintUsers(this.users);
-		int userIndex = InputHandler.GetIndex();
-		
-		User owner = this.users.get(userIndex);
-		
-		ConsoleDrawer.PrintUserInfo(owner);
-		if (owner.calendars.isEmpty()) {
-			System.out.println("There are no calendars for this user, please add a calendar first");
-			return;
-		}
-		
-		System.out.println("Choose a calendar index");
-		int calendarIndex = InputHandler.GetIndex();
-		Calendar calendar = owner.calendars.get(calendarIndex);
 		
 		System.out.println("Choose an event");
-		ConsoleDrawer.PrintEvents(calendar.events);
-		int eventIndex = InputHandler.GetIndex();
-		Event oldEvent = calendar.events.get(eventIndex);
+		this.consoleDrawer.PrintEvents(calendar.viewCalendarEvents());
+		Integer eventIndex = this.inputHandler.GetIndex();
+		Event oldEvent = this.storage.GetEvent(calendar, eventIndex);
 		
 		System.out.println("Enter in new information: ");
 		
-		Event newEvent = InputHandler.GetNewEvent(oldEvent.eventId);
+		Event newEvent = this.inputHandler.GetNewEvent(oldEvent.eventId);
 		
-		calendar.updateEvent(newEvent);
+		this.storage.UpdateEvent(calendar, newEvent);;
 	}
 	
 	private void ShareCalendar() {
-		if (this.users.size() < 2) {
-			System.out.println("There needs to be at least 2 users to share");
+		if (! Check2PlusUsers()) {
 			return;
 		}
 		
-		System.out.println("Choose a User");
-		ConsoleDrawer.PrintUsers(this.users);
-		int userIndex = InputHandler.GetIndex();
+		User owner = GetUser();
+		if(owner.username.equals("Invalid\n\n")) {
+			return;
+		}
 		
-		User owner = this.users.get(userIndex);
-		
-		ConsoleDrawer.PrintUserInfo(owner);
-		if (owner.calendars.isEmpty()) {
-			System.out.println("There are no calendars for this user, please add a calendar first");
+		this.consoleDrawer.PrintUserInfo(owner);
+		if (NoCalendars(owner)) {
 			return;
 		}
 		
 		System.out.println("Choose a calendar index");
-		int calendarIndex = InputHandler.GetIndex();
-		Calendar calendar = owner.calendars.get(calendarIndex);
+		Integer calendarIndex = this.inputHandler.GetIndex();
+		Calendar calendar = this.storage.GetCalendar(owner, calendarIndex);
 		
-		System.out.println("Choose a User to share with");
-		ConsoleDrawer.PrintUsers(this.users);
-		userIndex = InputHandler.GetIndex();
+
+		User receiver = GetUser();
+		if(receiver.username.equals("Invalid\n\n")) {
+			return;
+		}
 		
-		User receiver = this.users.get(userIndex);
-		
-		calendar.shareCalendar(receiver);
+		this.storage.ShareCalendar(calendar, receiver);;
 	}
 	
 	private void ShareEvent() {
-		if (this.users.size() < 2) {
-			System.out.println("There needs to be at least 2 users to share");
+		if (! Check2PlusUsers()) {
 			return;
 		}
-		
-		System.out.println("Choose a User");
-		ConsoleDrawer.PrintUsers(this.users);
-		int userIndex = InputHandler.GetIndex();
-		
-		User owner = this.users.get(userIndex);
-		
-		ConsoleDrawer.PrintUserInfo(owner);
-		if (owner.calendars.isEmpty()) {
-			System.out.println("There are no calendars for this user, please add a calendar first");
-			return;
-		}
-		
-		System.out.println("Choose a calendar index");
-		int calendarIndex = InputHandler.GetIndex();
-		Calendar calendar = owner.calendars.get(calendarIndex);
+
+		Calendar calendar = GetCalendar();
 
 		System.out.println("Choose an event");
-		ConsoleDrawer.PrintEvents(calendar.events);
-		int eventIndex = InputHandler.GetIndex();
+		this.consoleDrawer.PrintEvents(calendar.viewCalendarEvents());
+		Integer eventIndex = this.inputHandler.GetIndex();
 		
-		Event event = calendar.events.get(eventIndex);
+		Event event = this.storage.GetEvent(calendar, eventIndex);
+
+		User receiver = GetUser();
+		if(receiver.username.equals("Invalid\n\n")) {
+			return;
+		}
 		
-		System.out.println("Choose a User to share with");
-		ConsoleDrawer.PrintUsers(this.users);
-		userIndex = InputHandler.GetIndex();
-		
-		User receiver = this.users.get(userIndex);
-		
-		event.shareEvent(receiver);
+		this.storage.ShareEvent(event, receiver);
 	}
 
 	public static void main(String[] args) {		
@@ -329,7 +273,7 @@ public class AppEngine {
 				
 		while (true) {
 			System.out.println("Commands:\nView User\nView Calendar\nView Event\nView Shared Calendar\nView Shared Event\nAdd User\nAdd Calendar\nAdd Event\nUpdate Calendar\nUpdate Event\nShare Calendar\nShare Event");
-			String selection = InputHandler.GetSelection();
+			String selection = appEngine.inputHandler.GetSelection();
 			
 			if (selection.equals("View User")) {
 				appEngine.ViewUser();
